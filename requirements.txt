@@ -1,7 +1,7 @@
 plotly==5.11.0
 numpy==1.23.4
 pandas==1.5.1
-streamlit==1.16.0
+streamlit==1.17.0
 pip==21.3.1
 matplotlib==3.6.2
 wordcloud==1.8.2.2
