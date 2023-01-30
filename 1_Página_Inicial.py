@@ -66,14 +66,14 @@ df = df[df["VAGAS GARAGEM"].isin(['1', '2', '3', '4', '5 ou mais'])]
 
 with st.expander("⚙️ Configurar Dados"):
 
-    valor_max = df['VALOR [R$]'].max()
-    valor_min = df['VALOR [R$]'].min()
-    slider1, slider2 = st.slider('Filtre o Valor do Imóvel:', valor_min, valor_max, [valor_min, valor_max], 100)
+    valor_max = float(df['VALOR [R$]'].max())
+    valor_min = float(df['VALOR [R$]'].min())
+    slider1, slider2 = st.slider('Filtre o Valor do Imóvel:', valor_min, valor_max, [valor_min, valor_max], 100.0)
     mask_valor = (df['VALOR [R$]'] >= slider1) & (df['VALOR [R$]'] <= slider2)
 
-    area_max = df['AREA [M2]'].max()
-    area_min = df['AREA [M2]'].min()
-    slider1, slider2 = st.slider('Filtre a Area do Imóvel:', area_min, area_max, [area_min, area_max], 10)
+    area_max = float(df['AREA [M2]'].max())
+    area_min = float(df['AREA [M2]'].min())
+    slider1, slider2 = st.slider('Filtre a Area do Imóvel:', area_min, area_max, [area_min, area_max], 10.0)
     mask_area = (df['AREA [M2]'] >= slider1) & (df['AREA [M2]'] <= slider2)
 
     categoria = df['CATEGORIA'].unique().tolist()
