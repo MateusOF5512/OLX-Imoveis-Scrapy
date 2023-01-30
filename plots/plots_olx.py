@@ -13,11 +13,6 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 
 
-import folium
-from streamlit_folium import folium_static
-from folium.plugins import MarkerCluster
-from folium.plugins import MarkerCluster
-from folium import plugins
 
 @st.cache(allow_output_mutation=True)
 def get_data(path):
