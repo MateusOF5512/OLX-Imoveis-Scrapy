@@ -34,16 +34,14 @@ def olxlab(df, selected_rows):
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             varz = st.selectbox("Agrupamento dos dados:",
-                                options=["CATEGORIA", 'TIPO', 'QUARTOS', 'BANHEIROS',
+                                options=["CATEGORIA", 'QUARTOS', 'BANHEIROS',
                                          "VAGAS", 'CEP'], index=1)
         with col2:
-            df_x_bolha = df[['VALOR [R$]', 'AREA [M2]', 'FINANCIAMENTO ENTRADA [R$]',
-                             'CONDOMINIO [R$]', 'IPTU [R$]', 'GASTOS POR ANO [R$]']]
+            df_x_bolha = df[['VALOR [R$]', 'AREA [M2]', 'GASTOS POR ANO [R$]', 'CONDOMINIO [R$]', 'IPTU [R$]']]
             varx = st.selectbox('Coluna pro Eixo X:',
                                 df_x_bolha.columns.unique(), index=0, key=71)
         with col3:
-            df_y_bolha = df[['VALOR [R$]', 'AREA [M2]', 'FINANCIAMENTO ENTRADA [R$]',
-                             'CONDOMINIO [R$]', 'IPTU [R$]', 'GASTOS POR ANO [R$]']]
+            df_y_bolha = df[['VALOR [R$]', 'AREA [M2]', 'GASTOS POR ANO [R$]', 'CONDOMINIO [R$]', 'IPTU [R$]']]
             vary = st.selectbox('Coluna pro Eixo Y:',
                                 df_y_bolha.columns.unique(), index=1, key=72)
         with col4:
@@ -85,13 +83,12 @@ def olxlab(df, selected_rows):
 
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
-            df_x = df[['NOME ANUNCIO', 'CATEGORIA', 'TIPO', 'QUARTOS', 'BANHEIROS',
-                       'VAGAS GARAGEM', 'DETALHES DO IMOVEL', 'DETALHES DO CONDOMINIO',
-                       'IMAGENS ANUNCIO', 'DATA ANUNCIO', 'CIDADE', 'CEP', 'LINK ANUNCIO']]
+            df_x = df[['NOME ANUNCIO', 'CATEGORIA', 'QUARTOS', 'BANHEIROS',
+                       'VAGAS GARAGEM', 'IMAGENS ANUNCIO','PROFISSIONAL', 'DATA', 'HORARIO', 'LOCALIZACAO', 'LINK ANUNCIO']]
             var1 = st.selectbox('coluna pro Eixo X:', df_x.columns.unique(), index=2, key=78)
         with col2:
-            df_y = df[['VALOR [R$]', 'AREA [M2]', 'FINANCIAMENTO ENTRADA [R$]',
-                             'CONDOMINIO [R$]', 'IPTU [R$]', 'GASTOS POR ANO [R$]', 'UNIDADE']]
+            df_y = df[['VALOR [R$]', 'AREA [M2]',
+                             'CONDOMINIO [R$]', 'IPTU [R$]', 'GASTOS POR ANO [R$]', 'IMOVEIS']]
             var2 = st.selectbox('Coluna paro Eixo Y:', df_y.columns.unique(), index=0, key=79)
 
         with col3:
@@ -159,7 +156,7 @@ def dashboard(df):
 
     col1, col2, col3 = st.columns([520, 60, 520])
     with col1:
-        fig = pizza(df, 'CATEGORIA', 'UNIDADE')
+        fig = pizza(df, 'CATEGORIA', 'IMOVEIS')
         st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                     ">Número de Imóveis por Categorias</h4>",unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True, config=config)
@@ -172,20 +169,6 @@ def dashboard(df):
         st.plotly_chart(fig1, use_container_width=True, config=config)
     st.text('')
 
-    col1, col2, col3 = st.columns([520, 60, 520])
-    with col1:
-        fig2 = barra(df, 'TIPO', 'UNIDADE', 'sum', '#F18000')
-        st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
-                    ">Número de Imóveis por Tipo de Venda</h4>", unsafe_allow_html=True)
-        st.plotly_chart(fig2, use_container_width=True, config=config)
-    with col2:
-        st.text("")
-    with col3:
-        fig3 = barra(df, 'TIPO', 'VALOR [R$]', 'mean', '#F18000')
-        st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
-                    ">Média dos Valores por Tipo de Venda</h4>", unsafe_allow_html=True)
-        st.plotly_chart(fig3, use_container_width=True, config=config)
-    st.text('')
 
     col1, col2, col3 = st.columns([520, 60, 520])
     with col1:
@@ -194,7 +177,7 @@ def dashboard(df):
                     unsafe_allow_html=True)
 
         colors = ["#410f70", "#761cca", "#8f35e3", "#c18ff0", "#e6d2f9"]
-        fig4 = funil(df, 'QUARTOS', 'UNIDADE', colors, 'sum')
+        fig4 = funil(df, 'QUARTOS', 'IMOVEIS', colors, 'sum')
         st.plotly_chart(fig4, use_container_width=True, config=config)
 
     with col2:
@@ -214,7 +197,7 @@ def dashboard(df):
                     ">Número de Banheiros</h4>",
                     unsafe_allow_html=True)
         colors = ["#008000", "#00cc00", "#1aff1a", "#66ff66", "#b3ffb3"]
-        fig6 = funil(df, 'BANHEIROS', 'UNIDADE', colors, 'sum')
+        fig6 = funil(df, 'BANHEIROS', 'IMOVEIS', colors, 'sum')
         st.plotly_chart(fig6, use_container_width=True, config=config)
     with col2:
         st.text("")
@@ -233,7 +216,7 @@ def dashboard(df):
                     ">Número de Vagas Garagem</h4>",
                     unsafe_allow_html=True)
         colors = ["#cc7000", "#ff8c00", "#ffa333", "#ffba66", "#ffd199"]
-        fig5 = funil(df, 'VAGAS GARAGEM', 'UNIDADE', colors, 'sum')
+        fig5 = funil(df, 'VAGAS GARAGEM', 'IMOVEIS', colors, 'sum')
         st.plotly_chart(fig5, use_container_width=True, config=config)
     with col2:
         st.text("")
@@ -268,9 +251,7 @@ def dashboard(df):
         st.text("")
     with col3A:
         df_des = df.describe()
-        df_des = df_des[['VALOR [R$]', 'AREA [M2]', 'VALOR M2 [R$]',
-                         'GASTOS POR ANO [R$]', 'CONDOMINIO [R$]', 'IPTU [R$]',
-                         'FINANCIAMENTO ENTRADA [R$]', 'FINANCIAMENTO 1PARCELA [R$]']]
+        df_des = df_des[['VALOR [R$]', 'GASTOS POR ANO [R$]', 'CONDOMINIO [R$]', 'IPTU [R$]', 'AREA [M2]', 'IMOVEIS']]
         st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                     ">Estatísticas dos Gastos</h3>",
                     unsafe_allow_html=True)
@@ -290,7 +271,7 @@ def dashboard(df):
         st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 0px;'" +
                     ">Tipo de Imóvel por Gastos Ano X Valor da Compra</h3>",
                     unsafe_allow_html=True)
-        fig = plot_bolha(df, 'Média','VALOR [R$]', 'GASTOS POR ANO [R$]',  'TIPO', )
+        fig = plot_bolha(df, 'Média','VALOR [R$]', 'GASTOS POR ANO [R$]',  'CATEGORIA', )
         st.plotly_chart(fig, use_container_width=True, config=config)
 
     st.markdown('---')
@@ -314,9 +295,28 @@ def dashboard(df):
         st.text("")
     with col3A:
         st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 0px;'" +
-                    ">Total de Anúncios Publicados por Data</h3>",
+                    ">10 Cidades com mais Anúncios</h3>",
                     unsafe_allow_html=True)
-        fig = barra(df, 'DATA ANUNCIO', 'UNIDADE', 'sum', '#8BE462')
+
+        fig = barra2(df, 'CIDADE', 'IMOVEIS', 'sum', '#8BE462')
+        st.plotly_chart(fig, use_container_width=True, config=config)
+
+    col1A, col2A, col3A = st.columns([520, 60, 520])
+    with col1A:
+        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 0px;'" +
+                    ">Total de Anúncios Publicados por Dia</h3>",
+                    unsafe_allow_html=True)
+
+        fig = barra(df, 'DATA', 'IMOVEIS', 'sum', '#8BE462')
+        st.plotly_chart(fig, use_container_width=True, config=config)
+
+    with col2A:
+        st.text("")
+    with col3A:
+        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 0px;'" +
+                    ">Total de Anúncios Publicados por Hora</h3>",
+                    unsafe_allow_html=True)
+        fig = barra(df, 'HORA', 'IMOVEIS', 'sum', '#8BE462')
         st.plotly_chart(fig, use_container_width=True, config=config)
 
 
