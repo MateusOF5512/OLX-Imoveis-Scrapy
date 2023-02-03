@@ -14,10 +14,69 @@ from st_aggrid.shared import GridUpdateMode
 
 
 
-@st.cache(allow_output_mutation=True)
+@st.experimental_memo
 def get_data(path):
-    df = pd.read_csv(path, thousands='.')
+    df = pd.read_csv(path, thousands='.', decimal=',')
     return df
+
+
+@st.experimental_memo
+def tratamento_dados(df):
+
+    df['IMOVEIS'] = np.where(df['NOME'] == 2, 0, 1)
+
+    VALOR = df['VALOR'].str.split(' ', 1, expand=True)
+    df['VALOR'] = VALOR[1]
+
+    CONDOMINIO = df['CONDOMINIO'].str.split(' ', 1, expand=True)
+    CONDOMINIO = CONDOMINIO[1].str.split(' ', 1, expand=True)
+    df['CONDOMINIO'] = CONDOMINIO[1]
+
+    IPTU = df['IPTU'].str.split(' ', 1, expand=True)
+    IPTU = IPTU[1].str.split(' ', 1, expand=True)
+    df['IPTU'] = IPTU[1]
+
+    AREA = df['AREA'].str.split(' ', 1, expand=True)
+    df['AREA'] = AREA[0]
+
+    DATA = df['DATA_ANUNCIO'].str.split(',', 1, expand=True)
+    df['DATA'] = DATA[0]
+    df['HORARIO'] = DATA[1]
+
+    HORA = df['HORARIO'].str.split(':', 1, expand=True)
+    df['HORA'] = HORA[0]
+
+    LOCALIZACAO = df['LOCALIZACAO'].str.split(',', 1, expand=True)
+    df['CIDADE'] = LOCALIZACAO[0]
+
+    QUARTOS = df['QUARTOS'].str.split(' ', 1, expand=True)
+    df['QUARTOS'] = QUARTOS[0]
+    df['QUARTOS'] = df['QUARTOS'].replace(['5'], '5 OU MAIS')
+
+    BANHEIROS = df['BANHEIROS'].str.split(' ', 1, expand=True)
+    df['BANHEIROS'] = BANHEIROS[0]
+    df['BANHEIROS'] = df['BANHEIROS'].replace(['5'], '5 OU MAIS')
+
+    VAGAS = df['VAGAS'].str.split(' ', 1, expand=True)
+    df['VAGAS'] = VAGAS[0]
+    df['VAGAS'] = df['VAGAS'].replace(['5'], '5 OU MAIS')
+
+    df = df[df["QUARTOS"].isin(['1', '2', '3', '4', '5 OU MAIS'])]
+
+    df['VALOR'] = df['VALOR'].str.replace('.', '', regex=False)
+    df['CONDOMINIO'] = df['CONDOMINIO'].str.replace('.', '', regex=False)
+    df['IPTU'] = df['IPTU'].str.replace('.', '', regex=False)
+
+    df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]] = df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]].apply(pd.to_numeric)
+
+    df['GASTOS POR ANO [R$]'] = ((df['CONDOMINIO'] * 12) + (df['IPTU']))
+    df = df.rename(columns={'NOME': 'NOME ANUNCIO', 'VALOR': 'VALOR [R$]', 'AREA': 'AREA [M2]',
+                            'VAGAS': 'VAGAS GARAGEM',
+                            'CONDOMINIO': 'CONDOMINIO [R$]', 'IPTU': 'IPTU [R$]', 'link': 'LINK ANUNCIO',
+                            'IMAGENS': 'IMAGENS ANUNCIO', 'DATA_ANUNCIO': 'DATA ANUNCIO'})
+
+    return df
+
 
 def rodape():
     html_rodape = """
@@ -219,7 +278,7 @@ def barra(df, var1, var2, tipo, marker_color):
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
-        x=values, y=y,
+        x=values, y=y, name='',
         hovertemplate="</br><b>"+var1+":</b> %{x}" +
                       "</br><b>"+var2+":</b> %{y:,.0f}",
         textposition='none', marker_color=marker_color))
@@ -283,7 +342,31 @@ def wordcoud(df, var1):
 
 
 
+def barra2(df, var1, var2, tipo, marker_color):
 
+    df = df.groupby(var1).agg(tipo).sort_values(by=var2, ascending=False).reset_index()[:10]
+
+    values = df[var1].unique()
+    y = df[var2]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=values, y=y, name='',
+        hovertemplate="</br><b>"+var1+":</b> %{x}" +
+                      "</br><b>"+var2+":</b> %{y:,.0f}",
+        textposition='none', marker_color=marker_color))
+    fig.update_layout(
+        paper_bgcolor="#F8F8FF", plot_bgcolor="#F8F8FF", font={'color': "#000000", 'family': "sans-serif"},
+        height=300, margin=dict(l=10, r=10, b=10, t=10), autosize=False, hovermode="x")
+    fig.update_yaxes(
+        title_text=var2, title_font=dict(family='Sans-serif', size=16),
+        tickfont=dict(family='Sans-serif', size=12), nticks=7, showgrid=True, gridwidth=0.5, gridcolor='#D3D3D3')
+
+    fig.update_xaxes(
+        title_text=var1, title_font=dict(family='Sans-serif', size=16),
+        tickfont=dict(family='Sans-serif', size=11), showgrid=False)
+
+    return fig
 
 
 
