@@ -14,25 +14,10 @@ st.markdown(""" <style>
 from plots.plots_olx import *
 from layout.layout_olx import *
 
-path = 'data/imoveis-olx.csv'
-df = get_data(path)
+path = 'data/olx22.csv'
+df1 = get_data(path)
 
-df['UNIDADE'] = np.where(df['NOME'] == 2, 0, 1)
-df = df.drop(df.columns[[0]], axis=1)
-df['IMAGENS'] = df['IMAGENS']/10
-df['GASTOS POR ANO [R$]'] = (df['CONDOMINIO'] * 12) + (df['IPTU'])
-df['VALOR M2 [R$]'] = (df['VALOR'] / df['AREA'])
-
-TIPO = df['TIPO'].str.split('-', 1, expand=True)
-df['TIPO'] = TIPO[1]
-
-df = df.rename(columns={'NOME': 'NOME ANUNCIO', 'VALOR': 'VALOR [R$]', 'AREA': 'AREA [M2]',
-                        'VAGAS': 'VAGAS GARAGEM', 'DETALHES_IMOVEL': 'DETALHES DO IMOVEL',
-                        'DETALHES_CONDO': 'DETALHES DO CONDOMINIO',
-                        'PARCELA1': 'FINANCIAMENTO 1PARCELA [R$]', 'ENTRADA': 'FINANCIAMENTO ENTRADA [R$]',
-                        'CONDOMINIO': 'CONDOMINIO [R$]', 'IPTU': 'IPTU [R$]', 'link' : 'LINK ANUNCIO',
-                        'IMAGENS': 'IMAGENS ANUNCIO', 'DATA_ANUNCIO': 'DATA ANUNCIO'})
-
+df = tratamento_dados(df1)
 
 im1 = Image.open("imagens/olx.png")
 im2 = Image.open("imagens/scrapy.png")
@@ -60,29 +45,23 @@ with col5:
 st.markdown('---')
 
 
-df = df[df["BANHEIROS"].isin(['1', '2', '3', '4', '5 ou mais'])]
-df = df[df["VAGAS GARAGEM"].isin(['1', '2', '3', '4', '5 ou mais'])]
-
 
 with st.expander("⚙️ Configurar Dados"):
 
-    valor_max = float(df['VALOR [R$]'].max())
-    valor_min = float(df['VALOR [R$]'].min())
-    slider1, slider2 = st.slider('Filtre o Valor do Imóvel:', valor_min, valor_max, [valor_min, valor_max], 100.0)
-    mask_valor = (df['VALOR [R$]'] >= slider1) & (df['VALOR [R$]'] <= slider2)
+    valor_max = (df['VALOR [R$]'].max())
+    valor_min = (df['VALOR [R$]'].min())
+    #slider1, slider2 = st.slider('Filtre o Valor do Imóvel:', valor_min, valor_max, [valor_min, valor_max], 100)
+    #mask_valor = (df['VALOR [R$]'] >= slider1) & (df['VALOR [R$]'] <= slider2)
 
-    area_max = float(df['AREA [M2]'].max())
-    area_min = float(df['AREA [M2]'].min())
-    slider1, slider2 = st.slider('Filtre a Area do Imóvel:', area_min, area_max, [area_min, area_max], 10.0)
-    mask_area = (df['AREA [M2]'] >= slider1) & (df['AREA [M2]'] <= slider2)
+    area_max = (df['AREA [M2]'].max())
+    area_min = (df['AREA [M2]'].min())
+    #slider1, slider2 = st.slider('Filtre a Area do Imóvel:', area_min, area_max, [area_min, area_max], 10)
+    #mask_area = (df['AREA [M2]'] >= slider1) & (df['AREA [M2]'] <= slider2)
 
     categoria = df['CATEGORIA'].unique().tolist()
     selected_categoria = st.multiselect("Filtre por Categoria de Imóvel:",
                                    options=categoria, default=categoria)
 
-    tipo = df['TIPO'].unique().tolist()
-    selected_tipo = st.multiselect("Filtre por Tipo de Imóvel:",
-                                     options=tipo, default=tipo)
     quartos = df['QUARTOS'].unique().tolist()
     selected_quartos = st.multiselect("Filtre a Quantidade de Quartos:",
                                      options=quartos, default=quartos)
@@ -95,12 +74,11 @@ with st.expander("⚙️ Configurar Dados"):
 
 
 df = df[df['CATEGORIA'].isin(selected_categoria)]
-df = df[df['TIPO'].isin(selected_tipo)]
 df = df[df['QUARTOS'].isin(selected_quartos)]
 df = df[df['BANHEIROS'].isin(selected_banheiros)]
 df = df[df['VAGAS GARAGEM'].isin(selected_vagas)]
-df = df.loc[mask_valor]
-df = df.loc[mask_area]
+#df = df.loc[mask_valor]
+#df = df.loc[mask_area]
 
 st.markdown("<h3 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
             ">Base de Dados Completa</h3>", unsafe_allow_html=True)
