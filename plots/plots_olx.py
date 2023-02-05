@@ -12,13 +12,20 @@ from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
 
-
+import folium
+from streamlit_folium import folium_static
+from folium.plugins import MarkerCluster
+from folium.plugins import MarkerCluster
+from folium import plugins
 
 @st.experimental_memo
 def get_data(path):
     df = pd.read_csv(path, thousands='.', decimal=',')
     return df
 
+def get_data_float(path):
+    df = pd.read_csv(path)
+    return df
 
 @st.experimental_memo
 def tratamento_dados(df):
@@ -48,6 +55,7 @@ def tratamento_dados(df):
 
     LOCALIZACAO = df['LOCALIZACAO'].str.split(',', 1, expand=True)
     df['CIDADE'] = LOCALIZACAO[0]
+    df['BAIRRO'] = LOCALIZACAO[1]
 
     QUARTOS = df['QUARTOS'].str.split(' ', 1, expand=True)
     df['QUARTOS'] = QUARTOS[0]
@@ -67,7 +75,19 @@ def tratamento_dados(df):
     df['CONDOMINIO'] = df['CONDOMINIO'].str.replace('.', '', regex=False)
     df['IPTU'] = df['IPTU'].str.replace('.', '', regex=False)
 
+    df["CONDOMINIO"].fillna(0, inplace=True)
+    df["IPTU"].fillna(0, inplace=True)
+    df["PROFISSIONAL"].fillna("Novato", inplace=True)
+    df["IMAGENS"].fillna(0, inplace=True)
+    df["BANHEIROS"].fillna('1', inplace=True)
+    df["VAGAS"].fillna('0', inplace=True)
+
+    df['DATA'] = df['DATA'].replace(['Hoje'], '04 de fev')
+    df['DATA'] = df['DATA'].replace(['Ontem'], '03 de fev')
+
+
     df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]] = df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]].apply(pd.to_numeric)
+
 
     df['GASTOS POR ANO [R$]'] = ((df['CONDOMINIO'] * 12) + (df['IPTU']))
     df = df.rename(columns={'NOME': 'NOME ANUNCIO', 'VALOR': 'VALOR [R$]', 'AREA': 'AREA [M2]',
@@ -188,7 +208,7 @@ def bar_plot(df, var1, var2, tipo):
         x=values, y=y, name=tipo,
         hovertemplate="</br><b>"+var1+":</b> %{x}" +
                       "</br><b>"+var2+":</b> %{y:,.0f}",
-        textposition='none', marker_color='#E1306C'))
+        textposition='none', marker_color='#F18000'))
     fig.update_layout(
         paper_bgcolor="#F8F8FF", plot_bgcolor="#F8F8FF", font={'color': "#000000", 'family': "sans-serif"},
         height=300, margin=dict(l=20, r=20, b=20, t=20), autosize=False, hovermode="x")
@@ -217,25 +237,29 @@ def barra_empilada(df, var, tipo):
         name='QUARTOS', x=x, y=df_q[var],
         hovertemplate="</br><b>Quartos:</b> %{x}" +
                       "</br><b>"+tipo+":</b> %{y}",
-        textposition='none', marker_color='#6D09D5'
+        textposition='none', marker_color='#6D09D5',
+        marker_line_color = '#404040', marker_line_width = 1
     ))
     fig.add_trace(go.Bar(
         name='BANHEIROS', x=x, y=df_b[var],
         hovertemplate="</br><b>Banheiros:</b> %{x}" +
                       "</br><b>" + tipo + ":</b> %{y}",
-        textposition='none', marker_color='#8BE462'
+        textposition='none', marker_color='#8BE462',
+        marker_line_color = '#404040', marker_line_width = 1
     ))
     fig.add_trace(go.Bar(
         name='VAGAS GARAGEM', x=x, y=df_v[var],
         hovertemplate="</br><b>Vagas Garagem:</b> %{x}" +
                       "</br><b>" + tipo + ":</b> %{y}",
-        textposition='none', marker_color='#F18000'
+        textposition='none', marker_color='#F18000',
+        marker_line_color = '#404040', marker_line_width = 1
     ))
 
     fig.update_layout(
         paper_bgcolor="#F8F8FF", plot_bgcolor="#F8F8FF", font={'color': "#000000", 'family': "sans-serif"},
         legend=dict(font_size=11, orientation="h", yanchor="top", y=1.20, xanchor="center", x=0.5),
-        height=320, barmode='stack', margin=dict(l=1, r=10, b=25, t=10), autosize=True, hovermode="x")
+        height=320, barmode='stack', margin=dict(l=1, r=10, b=25, t=10), autosize=True, hovermode="x",
+    )
     fig.update_yaxes(
         title_text=var, title_font=dict(family='Sans-serif', size=12),
         tickfont=dict(family='Sans-serif', size=9), nticks=7, showgrid=True, gridwidth=0.5, gridcolor='#D3D3D3')
@@ -256,13 +280,16 @@ def pizza(df, var1, var2):
     colors = ['#8BE462', '6D09D5']
 
     fig = go.Figure(data=[go.Pie(labels=df[var1],
-                                    values=df[var2],
+                                    values=df[var2], name='',
+                                    hovertemplate="</br><b>" + var1 + ":</b> %{label}" +
+                                                  "</br><b>" + var2 + ":</b> %{value}" +
+                                                  "</br><b>Porcentagem:</b> %{percent}",
                                     textinfo='percent',
-                                    showlegend=True,
+                                    showlegend=False,
                                     marker=dict(colors=colors,
                                                 line=dict(color='#000010', width=2)))])
     fig.update_traces(hole=.4, hoverinfo="label+percent+value")
-    fig.update_layout(autosize=True,
+    fig.update_layout(autosize=False,
                          height=150, margin=dict(l=10, r=10, b=10, t=10),
                          paper_bgcolor="#F8F8FF", font={'size': 20})
 
@@ -280,8 +307,9 @@ def barra(df, var1, var2, tipo, marker_color):
     fig.add_trace(go.Bar(
         x=values, y=y, name='',
         hovertemplate="</br><b>"+var1+":</b> %{x}" +
-                      "</br><b>"+var2+":</b> %{y:,.0f}",
-        textposition='none', marker_color=marker_color))
+                      "</br><b>"+var2+":</b> %{y:.0f}",
+        textposition='none', marker_color=marker_color,
+        marker_line_color = '#404040', marker_line_width = 1))
     fig.update_layout(
         paper_bgcolor="#F8F8FF", plot_bgcolor="#F8F8FF", font={'color': "#000000", 'family': "sans-serif"},
         height=300, margin=dict(l=10, r=10, b=10, t=10), autosize=False, hovermode="x")
@@ -305,7 +333,8 @@ def funil(df, var1, var2, colors, tipo):
 
     fig = go.Figure()
     fig.add_trace(go.Funnel(
-        y=values, x=y, textposition="inside", textinfo="percent total + value",
+        y=values, x=y, name='',
+        textposition="inside", textinfo="percent total + value",
         marker={"color": colors,
                 "line": {"width": [2, 2, 2, 2, 2, 2],
                          "color": ["black", "black", "black", "black", "black"]}},
@@ -354,7 +383,8 @@ def barra2(df, var1, var2, tipo, marker_color):
         x=values, y=y, name='',
         hovertemplate="</br><b>"+var1+":</b> %{x}" +
                       "</br><b>"+var2+":</b> %{y:,.0f}",
-        textposition='none', marker_color=marker_color))
+        textposition='none', marker_color=marker_color,
+        marker_line_color = '#404040', marker_line_width = 1))
     fig.update_layout(
         paper_bgcolor="#F8F8FF", plot_bgcolor="#F8F8FF", font={'color': "#000000", 'family': "sans-serif"},
         height=300, margin=dict(l=10, r=10, b=10, t=10), autosize=False, hovermode="x")
@@ -371,5 +401,97 @@ def barra2(df, var1, var2, tipo, marker_color):
 
 
 
+def barra3(df, var1, var2, tipo, marker_color):
+
+    df = df.groupby(var1).agg(tipo).sort_values(by=var1, ascending=True).reset_index()
+
+    values = df[var1].unique()
+    y = df[var2]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=values, y=y, name='',
+        hovertemplate="</br><b>"+var1+":</b> %{x}" +
+                      "</br><b>"+var2+":</b> %{y:,.0f}",
+        textposition='none', marker_color=marker_color,
+        marker_line_color = '#404040', marker_line_width = 1))
+    fig.update_layout(
+        paper_bgcolor="#F8F8FF", plot_bgcolor="#F8F8FF", font={'color': "#000000", 'family': "sans-serif"},
+        height=300, margin=dict(l=10, r=10, b=10, t=10), autosize=False, hovermode="x")
+    fig.update_yaxes(
+        title_text=var2, title_font=dict(family='Sans-serif', size=16),
+        tickfont=dict(family='Sans-serif', size=12), nticks=7, showgrid=True, gridwidth=0.5, gridcolor='#D3D3D3')
+
+    fig.update_xaxes(
+        title_text=var1, title_font=dict(family='Sans-serif', size=16),
+        tickfont=dict(family='Sans-serif', size=11), showgrid=False)
+
+    return fig
+
+
+
+
+def mapa(df, df_local):
+
+    merge = pd.merge(df, df_local, how='left', on='LOCALIZACAO')
+    merge = merge[merge['LAT'].notna()]
+
+    col1A, col2A, col3A = st.columns([520, 60, 520])
+    with col1A:
+        coordenadas = []
+        for lat, long in zip(merge["LAT"], merge["LONG"]):
+            coordenadas.append([lat, long])
+
+        mapa = folium.Map(location=[merge["LAT"].mean(),
+                                    merge["LONG"].mean()],
+                          zoom_start=9, tiles='Stamen Terrain',
+                          width=550, height=300, control_scale=True)
+
+        mapa.add_child(plugins.HeatMap(coordenadas))
+
+        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 10px;'" +
+                    ">Mapa de Calor dos Imóveis</h3>", unsafe_allow_html=True)
+        folium_static(mapa)
+
+    with col2A:
+        st.text("")
+    with col3A:
+        colors = {
+            'Biguaçu': 'red',
+            'Laguga': 'red',
+            'Governador Celso Ramos': 'purple',
+            'Tijucas': 'red',
+            'Garopaba': 'orange',
+            'Criciúma': 'red',
+            'Tubarão': 'red',
+            'Florianópolis': 'green',
+            'São José': 'blue',
+            'Palhoça': 'red',
+        }
+
+        merge2 = merge.groupby(['LOCALIZACAO', 'CIDADE', "LAT", "LONG", ]).count().reset_index()
+
+        mapa2 = folium.Map(location=[merge2["LAT"].mean(),
+                                     merge2["LONG"].mean()],
+                           zoom_start=9,
+                           tiles='Stamen Terrain',
+                           width=550, height=300, control_scale=True)
+
+        for name, row in merge2.iterrows():
+            if row['CIDADE'] in colors.keys():
+                folium.Marker(
+                    location=[row["LAT"], row["LONG"]],
+                    popup=f"Local: {row['LOCALIZACAO']} \n "
+                          f"N°Imóveis: {row['IMOVEIS']}",
+                    icon=folium.Icon(color=colors[row['CIDADE']])
+                ).add_to(mapa2)
+
+        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 10px;'" +
+                    ">Localização dos Imóveis</h3>", unsafe_allow_html=True)
+        folium_static(mapa2)
+
+        st.dataframe(merge2)
+
+    return None
 
 
