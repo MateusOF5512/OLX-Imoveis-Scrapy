@@ -2,7 +2,6 @@
 
 import streamlit as st
 from PIL import Image
-from streamlit_extras.no_default_selectbox import selectbox
 
 im = Image.open("imagens/olx_.png")
 st.set_page_config(page_title="OLX Scrapy | Grande Florianópolis", page_icon=im, layout="wide")
