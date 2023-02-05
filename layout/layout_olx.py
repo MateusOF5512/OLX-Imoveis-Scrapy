@@ -30,12 +30,54 @@ def olxlab(df, selected_rows):
         st.text("")
         st.text("")
 
-        # CONFIGURAÇÃO PARA ANÁLISE E EXPLORAÇÃO
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            df_x = df[['NOME ANUNCIO', 'CATEGORIA', 'QUARTOS', 'BANHEIROS',
+                       'VAGAS GARAGEM', 'IMAGENS ANUNCIO', 'PROFISSIONAL', 'DATA', 'HORARIO', 'LOCALIZACAO',
+                       'LINK ANUNCIO']]
+            var1 = st.selectbox('coluna pro Eixo X:', df_x.columns.unique(), index=2, key=78)
+        with col2:
+            df_y = df[['VALOR [R$]', 'AREA [M2]',
+                       'CONDOMINIO [R$]', 'IPTU [R$]', 'GASTOS POR ANO [R$]', 'IMOVEIS']]
+            var2 = st.selectbox('Coluna paro Eixo Y:', df_y.columns.unique(), index=0, key=79)
+
+        with col3:
+            tipo = st.radio("Formato do Eixo Y:",
+                            options=["Total dos Valores", "Média dos Valores"], index=1, horizontal=True)
+
+        fig1 = bar_plot(df, var1, var2, tipo)
+        st.plotly_chart(fig1, use_container_width=True, config=config)
+
+        # DOWNLOAD E VISUALIZAÇÃO DOS DADOS SELECIONADOS ------------------------------------------------
+        with st.expander("🔎️   Dados - Análise Comparativa"):
+            if tipo == "Total dos Valores":
+                df_barra = df.groupby([var1])[var2].agg('sum').reset_index().sort_values(var1, ascending=True)
+                df_barra.loc[:, var2] = df_barra[var2].map('{:,.0f}'.format)
+            elif tipo == "Média dos Valores":
+                df_barra = df.groupby([var1])[var2].agg('mean').reset_index().sort_values(var1, ascending=True)
+                df_barra.loc[:, var2] = df_barra[var2].map('{:,.0f}'.format)
+
+            checkdf = st.checkbox('Visualizar Dados', key=58)
+            if checkdf:
+                df_barra = df_barra[[var1, var2]]
+
+                st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB;'" +
+                            "><i>" + tipo + "</i> de <i>" + var2 + "</i> por <i>" + var1 + "</i> - TABELA RESUMIDA</h3>",
+                            unsafe_allow_html=True)
+                agg_tabela(df_barra, use_checkbox=True)
+
+            df_barra = df_barra.to_csv(index=False).encode('utf-8')
+            st.download_button(label="Download Dados", data=df_barra,
+                               file_name="DataApp.csv", mime='text/csv')
+
+        st.text('')
+        st.text('')
+
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             varz = st.selectbox("Agrupamento dos dados:",
                                 options=["CATEGORIA", 'QUARTOS', 'BANHEIROS',
-                                         "VAGAS", 'CEP'], index=1)
+                                         "VAGAS", 'CIDADE', 'LOCALIZACAO', 'HORA', 'DATA'], index=1)
         with col2:
             df_x_bolha = df[['VALOR [R$]', 'AREA [M2]', 'GASTOS POR ANO [R$]', 'CONDOMINIO [R$]', 'IPTU [R$]']]
             varx = st.selectbox('Coluna pro Eixo X:',
@@ -81,46 +123,6 @@ def olxlab(df, selected_rows):
         st.text("")
         st.text("")
 
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col1:
-            df_x = df[['NOME ANUNCIO', 'CATEGORIA', 'QUARTOS', 'BANHEIROS',
-                       'VAGAS GARAGEM', 'IMAGENS ANUNCIO','PROFISSIONAL', 'DATA', 'HORARIO', 'LOCALIZACAO', 'LINK ANUNCIO']]
-            var1 = st.selectbox('coluna pro Eixo X:', df_x.columns.unique(), index=2, key=78)
-        with col2:
-            df_y = df[['VALOR [R$]', 'AREA [M2]',
-                             'CONDOMINIO [R$]', 'IPTU [R$]', 'GASTOS POR ANO [R$]', 'IMOVEIS']]
-            var2 = st.selectbox('Coluna paro Eixo Y:', df_y.columns.unique(), index=0, key=79)
-
-        with col3:
-            tipo = st.radio("Formato do Eixo Y:",
-                            options=["Total dos Valores", "Média dos Valores"], horizontal=True)
-
-        fig1 = bar_plot(df, var1, var2, tipo)
-        st.plotly_chart(fig1, use_container_width=True, config=config)
-
-        # DOWNLOAD E VISUALIZAÇÃO DOS DADOS SELECIONADOS ------------------------------------------------
-        with st.expander("🔎️   Dados - Análise Comparativa"):
-            if tipo == "Total dos Valores":
-                df_barra = df.groupby([var1])[var2].agg('sum').reset_index().sort_values(var1, ascending=True)
-                df_barra.loc[:, var2] = df_barra[var2].map('{:,.0f}'.format)
-            elif tipo == "Média dos Valores":
-                df_barra = df.groupby([var1])[var2].agg('mean').reset_index().sort_values(var1, ascending=True)
-                df_barra.loc[:, var2] = df_barra[var2].map('{:,.0f}'.format)
-
-            checkdf = st.checkbox('Visualizar Dados', key=58)
-            if checkdf:
-                df_barra = df_barra[[var1, var2]]
-
-                st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB;'" +
-                            "><i>" + tipo + "</i> de <i>" + var2 + "</i> por <i>" + var1 + "</i> - TABELA RESUMIDA</h3>",
-                            unsafe_allow_html=True)
-                agg_tabela(df_barra, use_checkbox=True)
-
-            df_barra = df_barra.to_csv(index=False).encode('utf-8')
-            st.download_button(label="Download Dados", data=df_barra,
-                               file_name="DataApp.csv", mime='text/csv')
-
-
     return None
 
 
@@ -145,7 +147,7 @@ def relatorio(df):
 
 
 
-def dashboard(df):
+def dashboard(df, df_local):
     st.text('')
     st.markdown("<h2 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                 ">Características dos Imóveis</h2>",unsafe_allow_html=True)
@@ -215,7 +217,7 @@ def dashboard(df):
         st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                     ">Número de Vagas Garagem</h4>",
                     unsafe_allow_html=True)
-        colors = ["#cc7000", "#ff8c00", "#ffa333", "#ffba66", "#ffd199"]
+        colors = ["#cc7000", "#ff8c00", "#ffa333", "#ffba66", "#ffd199", "#fff"]
         fig5 = funil(df, 'VAGAS GARAGEM', 'IMOVEIS', colors, 'sum')
         st.plotly_chart(fig5, use_container_width=True, config=config)
     with col2:
@@ -224,7 +226,7 @@ def dashboard(df):
         st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                     ">Média dos Valores por Vagas Garagem</h4>",
                     unsafe_allow_html=True)
-        colors = ["#cc7000", "#ff8c00", "#ffa333", "#ffba66", "#ffd199"]
+        colors = ["#cc7000", "#ff8c00", "#ffa333", "#ffba66", "#ffd199", "#fff"]
         fig5 = funil(df, 'VAGAS GARAGEM', 'VALOR [R$]', colors, 'mean')
         st.plotly_chart(fig5, use_container_width=True, config=config)
     st.text('')
@@ -298,7 +300,7 @@ def dashboard(df):
                     ">10 Cidades com mais Anúncios</h3>",
                     unsafe_allow_html=True)
 
-        fig = barra2(df, 'CIDADE', 'IMOVEIS', 'sum', '#8BE462')
+        fig = barra2(df, 'CIDADE', 'IMOVEIS', 'sum', '#6D09D5')
         st.plotly_chart(fig, use_container_width=True, config=config)
 
     col1A, col2A, col3A = st.columns([520, 60, 520])
@@ -316,7 +318,7 @@ def dashboard(df):
         st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 0px;'" +
                     ">Total de Anúncios Publicados por Hora</h3>",
                     unsafe_allow_html=True)
-        fig = barra(df, 'HORA', 'IMOVEIS', 'sum', '#8BE462')
+        fig = barra3(df, 'HORA', 'IMOVEIS', 'sum', '#F18000')
         st.plotly_chart(fig, use_container_width=True, config=config)
 
 
