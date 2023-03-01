@@ -23,12 +23,12 @@ def sidebar(df):
 def olxlab(df, selected_rows):
 
     if len(selected_rows) == 0:
-        # GRÁFICO DE BOLHO - ANÁLSIE DE DISPERÇÃO - PARTE 1 ----------------------------------------
-        st.markdown("<h3 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px 0px 0px;'" +
-                    ">Análise de Disperção -  Gráfico de Bolha</h3>",
-                    unsafe_allow_html=True)
-        st.text("")
-        st.text("")
+        st.markdown('---')
+        st.markdown("<h2 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
+                    ">Análise Comparativa -  Gráfico de Barra</h2>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-size:120%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
+                    ">Dados em Análise: " + str(df.shape[0]) + "</h4>", unsafe_allow_html=True)
+        st.markdown('---')
 
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
@@ -70,14 +70,19 @@ def olxlab(df, selected_rows):
             st.download_button(label="Download Dados", data=df_barra,
                                file_name="DataApp.csv", mime='text/csv')
 
-        st.text('')
-        st.text('')
+        st.text("")
+        st.markdown('---')
+        st.markdown("<h2 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px 0px 0px;'" +
+                    ">Análise de Disperção -  Gráfico de Bolha</h2>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-size:120%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
+                    ">Dados em Análise: " + str(df.shape[0]) + "</h4>", unsafe_allow_html=True)
+        st.markdown('---')
 
         col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
         with col1:
             varz = st.selectbox("Agrupamento dos dados:",
-                                options=["CATEGORIA", 'QUARTOS', 'BANHEIROS',
-                                         "VAGAS", 'CIDADE', 'LOCALIZACAO', 'HORA', 'DATA'], index=1)
+                                options=["CATEGORIA", 'QUARTOS', 'BANHEIROS',"VAGAS", 'CIDADE',
+                                         'LOCALIZACAO', 'HORA', 'DATA', 'CIDADE', 'BAIRRO', 'LINK ANUNCIO'], index=1)
         with col2:
             df_x_bolha = df[['VALOR [R$]', 'AREA [M2]', 'GASTOS POR ANO [R$]', 'CONDOMINIO [R$]', 'IPTU [R$]']]
             varx = st.selectbox('Coluna pro Eixo X:',
@@ -116,11 +121,6 @@ def olxlab(df, selected_rows):
                                file_name="DataApp.csv", mime='text/csv')
         st.markdown('---')
         st.text('')
-        # GRÁFICO DE BARRA ´ANÁLISE COMPARATIVA - PARTE 2 ------------------------------------------------
-        st.markdown("<h3 style='font-size:200%; text-align: center; color: #6709CB;'" +
-                    ">Análise Comparativa -  Gráfico de Barra</h3>",
-                    unsafe_allow_html=True)
-        st.text("")
         st.text("")
 
     return None
@@ -129,6 +129,13 @@ def olxlab(df, selected_rows):
 
 def relatorio(df):
 
+    st.markdown('---')
+    st.markdown("<h3 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px 0px 0px;'" +
+                ">Análise Exploratória dos Dados</h3>", unsafe_allow_html=True)
+    st.markdown("<h4 style='font-size:120%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
+                ">Dados em Análise: " + str(df.shape[0]) + "</h4>", unsafe_allow_html=True)
+    st.markdown('---')
+
     text = """Para gerar os Relatórios utilizamos o pandas-profiling, que entrega todas as ferramentas necessárias para 
                     uma análise profunda, rápida e simples dos dados. Gerando automaticamente relatórios personalizados para 
                     cada variável no conjunto de dados, com estatística, gráficos, alertas, correlações e mais. 
@@ -136,6 +143,8 @@ def relatorio(df):
                     mas a demora vale a pena pela riqueza de informações, enquanto espera leia sobre suas funcionalidades:"""
 
     st.info(text)
+
+
 
     report = st.checkbox("Carregar Relatório dos Dados 🔎", key=76)
 
@@ -158,14 +167,14 @@ def dashboard(df, df_local):
 
     col1, col2, col3 = st.columns([520, 60, 520])
     with col1:
-        fig = pizza(df, 'CATEGORIA', 'IMOVEIS')
+        fig = pizza(df, 'CATEGORIA', 'IMOVEIS', 'sum')
         st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                     ">Número de Imóveis por Categorias</h4>",unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True, config=config)
     with col2:
         st.text('')
     with col3:
-        fig1 = pizza(df, 'CATEGORIA', 'VALOR [R$]')
+        fig1 = pizza(df, 'CATEGORIA', 'VALOR [R$]', 'mean')
         st.markdown("<h4 style='font-size:150%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
                     ">Média dos Valores por Categorias</h4>", unsafe_allow_html=True)
         st.plotly_chart(fig1, use_container_width=True, config=config)
@@ -321,5 +330,77 @@ def dashboard(df, df_local):
         fig = barra3(df, 'HORA', 'IMOVEIS', 'sum', '#F18000')
         st.plotly_chart(fig, use_container_width=True, config=config)
 
+
+    return None
+
+
+def mapa(df, df_local):
+    merge = pd.merge(df, df_local, how='left', on='LOCALIZACAO')
+    merge = merge[merge['LAT'].notna()]
+
+    st.markdown('---')
+    st.markdown("<h3 style='font-size:200%; text-align: center; color: #6709CB; padding: 0px 0px 0px 0px;'" +
+                ">Localização dos Imóveis</h3>", unsafe_allow_html=True)
+    st.markdown("<h4 style='font-size:120%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
+                ">Imóveis em Análise: " + str(merge.shape[0]) + "</h4>", unsafe_allow_html=True)
+    st.markdown('---')
+
+    col1A, col2A, col3A = st.columns([520, 60, 520])
+    with col1A:
+        coordenadas = []
+        for lat, long in zip(merge["LAT"], merge["LONG"]):
+            coordenadas.append([lat, long])
+
+        mapa = folium.Map(location=[merge["LAT"].mean(),
+                                    merge["LONG"].mean()],
+                          zoom_start=9, tiles='Stamen Terrain',
+                          width=550, height=350, control_scale=True)
+
+        mapa.add_child(plugins.HeatMap(coordenadas))
+
+        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 10px;'" +
+                    ">Mapa de Calor dos Imóveis</h3>", unsafe_allow_html=True)
+        folium_static(mapa)
+
+    with col2A:
+        st.text("")
+    with col3A:
+        colors = {
+            'Biguaçu': 'red',
+            'Laguga': 'red',
+            'Governador Celso Ramos': 'purple',
+            'Tijucas': 'red',
+            'Garopaba': 'orange',
+            'Criciúma': 'red',
+            'Tubarão': 'red',
+            'Florianópolis': 'green',
+            'São José': 'blue',
+            'Palhoça': 'red',
+        }
+
+        merge2 = merge.groupby(['LOCALIZACAO', 'CIDADE', "LAT", "LONG", ]).count().reset_index()
+
+        mapa2 = folium.Map(location=[merge2["LAT"].mean(),
+                                     merge2["LONG"].mean()],
+                           zoom_start=9,
+                           tiles='Stamen Terrain',
+                           width=550, height=350, control_scale=True)
+
+        for name, row in merge2.iterrows():
+            if row['CIDADE'] in colors.keys():
+                folium.Marker(
+                    location=[row["LAT"], row["LONG"]],
+                    popup=f"Local: {row['LOCALIZACAO']} \n "
+                          f"N°Imóveis: {row['IMOVEIS']}",
+                    icon=folium.Icon(color=colors[row['CIDADE']])
+                ).add_to(mapa2)
+
+        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 10px;'" +
+                    ">Concentração de Imóveis por Cidade</h3>", unsafe_allow_html=True)
+        folium_static(mapa2)
+
+    merge3 = merge.groupby(['LOCALIZACAO', 'CIDADE', "LAT", "LONG"]).mean().reset_index()
+    #merge3 = merge3[['LOCALIZACAO', 'CIDADE', "LAT", "LONG"]]
+    st.dataframe(merge3)
 
     return None
