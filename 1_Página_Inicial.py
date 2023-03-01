@@ -14,6 +14,10 @@ st.markdown(""" <style>
 from plots.plots_olx import *
 from layout.layout_olx import *
 
+path1 = 'data/olx_1venda_2802.csv'
+path2 = 'data/olx_1aluguel_2802.csv'
+path3 = 'data/local.csv'
+df_local = get_data_float(path3)
 
 
 col2, col3, col4 = st.columns([300, 1000, 300])
@@ -28,7 +32,7 @@ with col3:
                 ">Anúncios de Imóveis da Grande Florianópolis</h2>",
                 unsafe_allow_html=True)
     st.markdown("<h3 style='font-size:130%; text-align: center; color: #6709CB; padding: 0px 0px;'" +
-                ">Atualização: 04/02/2023</h3>",
+                ">Atualização: 06/02/2023</h3>",
                 unsafe_allow_html=True)
 
 with col4:
@@ -38,21 +42,14 @@ with col4:
 st.markdown('---')
 
 
-
-
-
-path1 = 'data/olx_0402_venda.csv'
-path2 = 'data/olx_0402_aluguel.csv'
-path3 = 'data/local.csv'
-df_local = get_data_float(path3)
-
 if basedados == 'Venda':
     df1 = get_data(path1)
 elif basedados == 'Aluguel':
     df1 = get_data(path2)
 
-df = tratamento_dados(df1)
 
+
+df = tratamento_dados(df1)
 
 
 
@@ -105,12 +102,17 @@ with st.expander("⚙️ Configurar Dados"):
     selected_cidade = st.multiselect("Filtre por Cidades:",
                                    options=cidade, default=cidade)
 
+    bairro = df['BAIRRO'].unique().tolist()
+    selected_bairro = st.multiselect("Filtre por Bairros:",
+                                     options=bairro, default=bairro)
+
 
 df = df[df['CATEGORIA'].isin(selected_categoria)]
 df = df[df['QUARTOS'].isin(selected_quartos)]
 df = df[df['BANHEIROS'].isin(selected_banheiros)]
 df = df[df['VAGAS GARAGEM'].isin(selected_vagas)]
 df = df[df['CIDADE'].isin(selected_cidade)]
+df = df[df['BAIRRO'].isin(selected_bairro)]
 df = df.loc[mask_valor]
 df = df.loc[mask_area]
 
@@ -124,10 +126,15 @@ selected_rows = agg_tabela(df, use_checkbox=True)
 st.markdown('---')
 
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 DASHBOARD","🌎 MAPAS",  "‍🔬 LABORATÓRIO", "🔎 ANALISE EXPLORATÓRIA"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 DASHBOARD","🌎 MAPAS",  "‍🔬 LABORATÓRIO", "🔎 ANALISE EXPLORATÓRIA", '👶 PRIMEIRA VEZ AQUI?'])
 
 with tab1:
-    dashboard(df, df_local)
+    if len(selected_rows) == 0:
+        dashboard(df, df_local)
+        #mapa2(df, df_local)
+    elif len(selected_rows) != 0:
+        dashboard(selected_rows, df_local)
+
 with tab2:
     if len(selected_rows) == 0:
         mapa(df, df_local)
@@ -140,10 +147,6 @@ with tab4:
     relatorio(df)
 
 
-
-
-st.text("")
-st.text("")
 st.text("")
 
 rodape()
