@@ -82,11 +82,13 @@ def tratamento_dados(df):
     df["BANHEIROS"].fillna('1', inplace=True)
     df["VAGAS"].fillna('0', inplace=True)
 
-    df['DATA'] = df['DATA'].replace(['Hoje'], '04 de fev')
-    df['DATA'] = df['DATA'].replace(['Ontem'], '03 de fev')
+    df['DATA'] = df['DATA'].replace(['Hoje'], '28 de fev')
+    df['DATA'] = df['DATA'].replace(['Ontem'], '27 de fev')
 
 
     df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]] = df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]].apply(pd.to_numeric)
+
+    df = df.loc[(df.AREA > 10)]
 
 
     df['GASTOS POR ANO [R$]'] = ((df['CONDOMINIO'] * 12) + (df['IPTU']))
@@ -107,7 +109,7 @@ def rodape():
       margin-right: auto;
       border-style: inset;
       border-width: 1.5px;">
-      <p style="color:Gainsboro; text-align: center;">Última Atualização dos Dados: 29/11/2022 - 22:00</p>
+      <p style="color:#b0b0b0; text-align: center;">Desenvolvedor: Mateus Ortiz</p>
     """
     st.markdown(html_rodape, unsafe_allow_html=True)
     return None
@@ -161,6 +163,7 @@ def plot_bolha(df, tipo, varx, vary, varz):
                                  ))
     elif tipo == "Média":
         df_gp = df.groupby(varz).agg('mean').reset_index()
+        imoveis  = df_gp['IMOVEIS']
         fig.add_trace(go.Scatter(x=df_gp[varx], y=df_gp[vary], customdata=df_gp[varz],
                                  mode='markers', name='',
                                  hovertemplate="</br><b>" + varz + "</b> %{customdata}" +
@@ -185,7 +188,6 @@ def plot_bolha(df, tipo, varx, vary, varz):
         tickfont=dict(family='Sans-serif', size=12), nticks=7, showgrid=True, gridwidth=0.8, gridcolor='#D3D3D3')
 
     return fig
-
 
 
 
@@ -273,16 +275,16 @@ def barra_empilada(df, var, tipo):
 
 
 
-def pizza(df, var1, var2):
+def pizza(df, var1, var2, tipo):
 
-    df = df.groupby(var1).agg('sum').sort_values(by=var2, ascending=False).reset_index()
+    df = df.groupby(var1).agg(tipo).sort_values(by=var2, ascending=False).reset_index()
     df = df[[var1, var2]]
     colors = ['#8BE462', '6D09D5']
 
     fig = go.Figure(data=[go.Pie(labels=df[var1],
                                     values=df[var2], name='',
                                     hovertemplate="</br><b>" + var1 + ":</b> %{label}" +
-                                                  "</br><b>" + var2 + ":</b> %{value}" +
+                                                  "</br><b>" + var2 + ":</b> %{value:,.0f}" +
                                                   "</br><b>Porcentagem:</b> %{percent}",
                                     textinfo='percent',
                                     showlegend=False,
@@ -431,67 +433,6 @@ def barra3(df, var1, var2, tipo, marker_color):
 
 
 
-def mapa(df, df_local):
 
-    merge = pd.merge(df, df_local, how='left', on='LOCALIZACAO')
-    merge = merge[merge['LAT'].notna()]
-
-    col1A, col2A, col3A = st.columns([520, 60, 520])
-    with col1A:
-        coordenadas = []
-        for lat, long in zip(merge["LAT"], merge["LONG"]):
-            coordenadas.append([lat, long])
-
-        mapa = folium.Map(location=[merge["LAT"].mean(),
-                                    merge["LONG"].mean()],
-                          zoom_start=9, tiles='Stamen Terrain',
-                          width=550, height=300, control_scale=True)
-
-        mapa.add_child(plugins.HeatMap(coordenadas))
-
-        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 10px;'" +
-                    ">Mapa de Calor dos Imóveis</h3>", unsafe_allow_html=True)
-        folium_static(mapa)
-
-    with col2A:
-        st.text("")
-    with col3A:
-        colors = {
-            'Biguaçu': 'red',
-            'Laguga': 'red',
-            'Governador Celso Ramos': 'purple',
-            'Tijucas': 'red',
-            'Garopaba': 'orange',
-            'Criciúma': 'red',
-            'Tubarão': 'red',
-            'Florianópolis': 'green',
-            'São José': 'blue',
-            'Palhoça': 'red',
-        }
-
-        merge2 = merge.groupby(['LOCALIZACAO', 'CIDADE', "LAT", "LONG", ]).count().reset_index()
-
-        mapa2 = folium.Map(location=[merge2["LAT"].mean(),
-                                     merge2["LONG"].mean()],
-                           zoom_start=9,
-                           tiles='Stamen Terrain',
-                           width=550, height=300, control_scale=True)
-
-        for name, row in merge2.iterrows():
-            if row['CIDADE'] in colors.keys():
-                folium.Marker(
-                    location=[row["LAT"], row["LONG"]],
-                    popup=f"Local: {row['LOCALIZACAO']} \n "
-                          f"N°Imóveis: {row['IMOVEIS']}",
-                    icon=folium.Icon(color=colors[row['CIDADE']])
-                ).add_to(mapa2)
-
-        st.markdown("<h3 style='font-size:150%; text-align: center; color: #6709CB; padding: 10px 10px;'" +
-                    ">Localização dos Imóveis</h3>", unsafe_allow_html=True)
-        folium_static(mapa2)
-
-        st.dataframe(merge2)
-
-    return None
 
 
