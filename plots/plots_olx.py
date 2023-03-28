@@ -32,70 +32,29 @@ def tratamento_dados(df):
 
     df['IMOVEIS'] = np.where(df['NOME'] == 2, 0, 1)
 
-    VALOR = df['VALOR'].str.split(' ', 1, expand=True)
-    df['VALOR'] = VALOR[1]
 
-    CONDOMINIO = df['CONDOMINIO'].str.split(' ', 1, expand=True)
-    CONDOMINIO = CONDOMINIO[1].str.split(' ', 1, expand=True)
-    df['CONDOMINIO'] = CONDOMINIO[1]
+    DATA = df['TIPO'].str.split(' ', 1, expand=True)
+    df['CATEGORIA'] = DATA[0]
 
-    IPTU = df['IPTU'].str.split(' ', 1, expand=True)
-    IPTU = IPTU[1].str.split(' ', 1, expand=True)
-    df['IPTU'] = IPTU[1]
-
-    AREA = df['AREA'].str.split(' ', 1, expand=True)
-    df['AREA'] = AREA[0]
-
-    DATA = df['DATA_ANUNCIO'].str.split(',', 1, expand=True)
+    DATA = df['DATA_ANUNCIO'].str.split(' às ', 1, expand=True)
     df['DATA'] = DATA[0]
     df['HORARIO'] = DATA[1]
 
     HORA = df['HORARIO'].str.split(':', 1, expand=True)
     df['HORA'] = HORA[0]
 
-    LOCALIZACAO = df['LOCALIZACAO'].str.split(',', 1, expand=True)
-    df['CIDADE'] = LOCALIZACAO[0]
-    df['BAIRRO'] = LOCALIZACAO[1]
+    df['DATA'] = df['DATA'].replace(['Hoje'], '27 de mar')
+    df['DATA'] = df['DATA'].replace(['Ontem'], '26 de mar')
 
-    QUARTOS = df['QUARTOS'].str.split(' ', 1, expand=True)
-    df['QUARTOS'] = QUARTOS[0]
-    df['QUARTOS'] = df['QUARTOS'].replace(['5'], '5 OU MAIS')
+    df['LOCALIZACAO'] = df.apply(lambda row: row['MUNICIPIO'] + ', ' + row['BAIRRO'], axis=1)
 
-    BANHEIROS = df['BANHEIROS'].str.split(' ', 1, expand=True)
-    df['BANHEIROS'] = BANHEIROS[0]
-    df['BANHEIROS'] = df['BANHEIROS'].replace(['5'], '5 OU MAIS')
+    df = df[['NOME','VALOR[R$]','TIPO','AREA[M2]','QUARTOS','BANHEIROS','VAGAS GARAGEM','CONDOMINIO[R$]',
+             'IPTU[R$]','GASTOS_ANO[R$]','LINK','MUNICIPIO','BAIRRO','LOGRADOURO','CEP','LATITUDE','LONGITUDE','LOCALIZACAO',
+             'Academia','Ar condicionado','Armários na cozinha','Armários no quarto',
+             'Churrasqueira','Condomínio fechado','Elevador','Mobiliado','Permitido animais','Piscina','Portaria','Porteiro 24h',
+             'Portão eletrônico','Quarto de serviço','Salão de festas','Segurança 24h','Varanda','Área de serviço','Área murada',
+             'IMAGENS','CODIGO','CATEGORIA','DATA_ANUNCIO','DATA','HORARIO','HORA','IMOVEIS']]
 
-    VAGAS = df['VAGAS'].str.split(' ', 1, expand=True)
-    df['VAGAS'] = VAGAS[0]
-    df['VAGAS'] = df['VAGAS'].replace(['5'], '5 OU MAIS')
-
-    df = df[df["QUARTOS"].isin(['1', '2', '3', '4', '5 OU MAIS'])]
-
-    df['VALOR'] = df['VALOR'].str.replace('.', '', regex=False)
-    df['CONDOMINIO'] = df['CONDOMINIO'].str.replace('.', '', regex=False)
-    df['IPTU'] = df['IPTU'].str.replace('.', '', regex=False)
-
-    df["CONDOMINIO"].fillna(0, inplace=True)
-    df["IPTU"].fillna(0, inplace=True)
-    df["PROFISSIONAL"].fillna("Novato", inplace=True)
-    df["IMAGENS"].fillna(0, inplace=True)
-    df["BANHEIROS"].fillna('1', inplace=True)
-    df["VAGAS"].fillna('0', inplace=True)
-
-    df['DATA'] = df['DATA'].replace(['Hoje'], '28 de fev')
-    df['DATA'] = df['DATA'].replace(['Ontem'], '27 de fev')
-
-
-    df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]] = df[["VALOR", "AREA", "CONDOMINIO", "IPTU"]].apply(pd.to_numeric)
-
-    df = df.loc[(df.AREA > 10)]
-
-
-    df['GASTOS POR ANO [R$]'] = ((df['CONDOMINIO'] * 12) + (df['IPTU']))
-    df = df.rename(columns={'NOME': 'NOME ANUNCIO', 'VALOR': 'VALOR [R$]', 'AREA': 'AREA [M2]',
-                            'VAGAS': 'VAGAS GARAGEM',
-                            'CONDOMINIO': 'CONDOMINIO [R$]', 'IPTU': 'IPTU [R$]', 'link': 'LINK ANUNCIO',
-                            'IMAGENS': 'IMAGENS ANUNCIO', 'DATA_ANUNCIO': 'DATA ANUNCIO'})
 
     return df
 
@@ -285,12 +244,12 @@ def pizza(df, var1, var2, tipo):
                                     values=df[var2], name='',
                                     hovertemplate="</br><b>" + var1 + ":</b> %{label}" +
                                                   "</br><b>" + var2 + ":</b> %{value:,.0f}" +
-                                                  "</br><b>Porcentagem:</b> %{percent}",
+                                                  "</br><b>Proporção:</b> %{percent}",
                                     textinfo='percent',
                                     showlegend=False,
                                     marker=dict(colors=colors,
                                                 line=dict(color='#000010', width=2)))])
-    fig.update_traces(hole=.4, hoverinfo="label+percent+value")
+    fig.update_traces(hole=.4, )
     fig.update_layout(autosize=False,
                          height=150, margin=dict(l=10, r=10, b=10, t=10),
                          paper_bgcolor="#F8F8FF", font={'size': 20})
