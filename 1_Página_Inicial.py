@@ -46,6 +46,7 @@ if basedados == 'Venda':
     df1 = get_data(path1)
 elif basedados == 'Aluguel':
     df1 = get_data(path2)
+    df1['VALOR[R$]'] = df1.apply(lambda row: row['VALOR[R$]'] / 10, axis= 1)
 
 df =  tratamento_dados(df1)
 
